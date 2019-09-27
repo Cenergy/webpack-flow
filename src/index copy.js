@@ -35,16 +35,6 @@ var MODELS = [
   { name: "Parrot" }
   // { name: "RiflePunch" },
 ];
-const singleMODELS = { name: "Parrot" };
-
-const singleUNITS = {
-  modelName: "Parrot",
-  meshName: "mesh_0",
-  position: { x: -4, y: 0, z: 0 },
-  rotation: { x: 0, y: Math.PI, z: 0 },
-  scale: 0.01,
-  animationName: "parrot_A_"
-};
 
 // Here we define instances of the models that we want to place in the scene, their position, scale and the animations
 // that must be played.
@@ -90,64 +80,71 @@ function loadModels() {
     var m = MODELS[i];
 
     loadGltfModel(m, function(model) {
-      singleInstantiateUnits(singleUNITS);
-      //   if (numLoadedModels === MODELS.length) {
-      //     console.log("All models loaded, time to instantiate units...");
-      //     instantiateUnits();
-      //   }
+      ++numLoadedModels;
+
+      if (numLoadedModels === MODELS.length) {
+        console.log("All models loaded, time to instantiate units...");
+        instantiateUnits();
+      }
     });
   }
 }
 
-function singleLoadModels(m) {
-  loadGltfModel(m, function(model) {
-    singleInstantiateUnits(singleUNITS);
-  });
-}
-
-function singleInstantiateUnits(u) {
+/**
+ * Look at UNITS configuration, clone necessary 3D model scenes, place the armatures and meshes in the scene and
+ * launch necessary animations
+ */
+function instantiateUnits() {
   var numSuccess = 0;
 
-  var model = getModelByName(u.modelName);
+  for (var i = 0; i < UNITS.length; ++i) {
+    var u = UNITS[i];
+    var model = getModelByName(u.modelName);
 
-  if (model) {
-    var clonedScene = THREE.SkeletonUtils.clone(model.scene);
+    if (model) {
+      var clonedScene = THREE.SkeletonUtils.clone(model.scene);
 
-    if (clonedScene) {
-      // Scene is cloned properly, let's find one mesh and launch animation for it
-      var clonedMesh = clonedScene.getObjectByName(u.meshName);
+      if (clonedScene) {
+        // Scene is cloned properly, let's find one mesh and launch animation for it
+        var clonedMesh = clonedScene.getObjectByName(u.meshName);
 
-      if (clonedMesh) {
-        var mixer = startAnimation(
-          clonedMesh,
-          model.animations,
-          u.animationName
-        );
+        if (clonedMesh) {
+          var mixer = startAnimation(
+            clonedMesh,
+            model.animations,
+            u.animationName
+          );
 
-        if (mixer) {
-          // Save the animation mixer in the list, will need it in the animation loop
-          mixers.push(mixer);
+          if (mixer) {
+            // Save the animation mixer in the list, will need it in the animation loop
+            mixers.push(mixer);
+            numSuccess++;
+          }
+        }
+
+        // Different models can have different configurations of armatures and meshes. Therefore,
+        // We can't set position, scale or rotation to individual mesh objects. Instead we set
+        // it to the whole cloned scene and then add the whole scene to the game world
+        // Note: this may have weird effects if you have lights or other items in the GLTF file's scene!
+        worldScene.add(clonedScene);
+
+        if (u.position) {
+          clonedScene.position.set(u.position.x, u.position.y, u.position.z);
+        }
+
+        if (u.scale) {
+          clonedScene.scale.set(u.scale, u.scale, u.scale);
+        }
+
+        if (u.rotation) {
+          clonedScene.rotation.x = u.rotation.x;
+          clonedScene.rotation.y = u.rotation.y;
+          clonedScene.rotation.z = u.rotation.z;
         }
       }
-
-      worldScene.add(clonedScene);
-
-      if (u.position) {
-        clonedScene.position.set(u.position.x, u.position.y, u.position.z);
-      }
-
-      if (u.scale) {
-        clonedScene.scale.set(u.scale, u.scale, u.scale);
-      }
-
-      if (u.rotation) {
-        clonedScene.rotation.x = u.rotation.x;
-        clonedScene.rotation.y = u.rotation.y;
-        clonedScene.rotation.z = u.rotation.z;
-      }
+    } else {
+      console.error("Can not find model", u.modelName);
     }
-  } else {
-    console.error("Can not find model", u.modelName);
   }
 
   console.log(`Successfully instantiated ${numSuccess} units`);
@@ -201,6 +198,16 @@ function loadGltfModel(model, onLoaded) {
 
     model.animations = gltf.animations;
     model.scene = scene;
+
+    // Enable Shadows
+
+    gltf.scene.traverse(function(object) {
+      if (object.isMesh) {
+        object.castShadow = true;
+      }
+    });
+
+    console.log("Done loading model", model.name);
 
     onLoaded(model);
   });

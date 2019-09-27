@@ -17,6 +17,16 @@ module.exports = {
             limit: 102400
           }
         }
+      },
+      {
+        test: /\.(gltf|glb)$/,
+        use: {
+          loader: "file-loader",
+          options: {
+            name: "[name].[ext]",
+            outputPath: "models/gltf/"
+          }
+        }
       }
     ]
   },
