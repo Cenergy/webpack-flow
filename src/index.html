@@ -1,12 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>webpack-flow</title>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #container {
+        height: 100%;
+        display: flex; /*设为伸缩容器*/
+        flex-flow: row; /*伸缩项目单行排列*/
+      }
+      #app {
+        width: 80%; /*固定宽度*/
+        border: 2px solid blue;
+        box-sizing: border-box;
+      }
+      #content {
+        flex: 1; /*这里设置为占比1，填充满剩余空间*/
+        border: 2px solid #ff4400;
+        box-sizing: border-box;
+      }
+    </style>
   </head>
   <body>
-    <div id="container"></div>
+    <div id="container">
+      <div id="app"></div>
+      <div id="content">目录:<br /></div>
+    </div>
   </body>
 </html>
